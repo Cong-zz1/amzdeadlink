@@ -13,7 +13,7 @@ from utils import google_search, bing_search
 def get_database_connection():
     db_config = {
         'user': 'root',  # 替换为你的数据库用户名
-        'password': '205515',  # 留空，使用Cloud SQL IAM或其他安全方式
+        'password': '',  # 留空，使用Cloud SQL IAM或其他安全方式
         'host': '35.185.164.158',
         'database': 'hapince'
     }
@@ -83,7 +83,6 @@ def login_or_register(engine):
         else:
             st.error("用户名已存在，请选择其他用户名")
 
-# 在应用主函数中处理登录状态
 def main():
     engine = get_database_connection()
     create_user_table(engine)
@@ -95,7 +94,6 @@ def main():
         st.write("你已经成功登录，现在可以使用该工具。")
         app_functionality()
 
-# 应用的主功能逻辑
 def app_functionality():
     st.title("亚马逊僵尸链接查询工具")
     st.write("遇到问题联系：happy_prince45")
