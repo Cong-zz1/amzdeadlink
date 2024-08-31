@@ -12,14 +12,15 @@ def google_search(keyword, site, page=0, headers=None):
     
     response = requests.get(search_url, headers=headers)
     soup = BeautifulSoup(response.text, 'html.parser')
-
-    for g in soup.find_all('div', class_='g'):
-        anchors = g.find_all('a')
-        if anchors:
-            link = anchors[0]['href']
-            title = g.find('h3').text if g.find('h3') else 'No title'
+    
+    for result in soup.find_all('div', class_='g'):
+        title_element = result.find('h3')
+        link_element = result.find('a')
+        if title_element and link_element:
+            title = title_element.text
+            link = link_element['href']
             search_results.append((title, link))
-
+    
     return search_results
 
 def bing_search(keyword, site, page=0, headers=None):
@@ -32,14 +33,13 @@ def bing_search(keyword, site, page=0, headers=None):
     
     response = requests.get(search_url, headers=headers)
     soup = BeautifulSoup(response.text, 'html.parser')
-
-    for li in soup.find_all('li', class_='b_algo'):
-        h2 = li.find('h2')
-        if h2:
-            a = h2.find('a')
-            if a:
-                title = a.text
-                link = a['href']
-                search_results.append((title, link))
-
+    
+    for result in soup.find_all('li', class_='b_algo'):
+        title_element = result.find('h2')
+        link_element = result.find('a')
+        if title_element and link_element:
+            title = title_element.text
+            link = link_element['href']
+            search_results.append((title, link))
+    
     return search_results
