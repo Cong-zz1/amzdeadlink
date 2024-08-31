@@ -13,7 +13,7 @@ from utils import google_search, bing_search
 def get_database_connection():
     db_config = {
         'user': 'root',
-        'password': 'your_password',  # 确保使用正确的密码
+        'password': '205515',  # 确保使用正确的密码
         'host': '35.185.164.158',
         'database': 'hapince'
     }
