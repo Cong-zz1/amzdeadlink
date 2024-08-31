@@ -12,10 +12,10 @@ from utils import google_search, bing_search
 # 连接到Google Cloud SQL数据库
 def get_database_connection():
     db_config = {
-        'user': 'your_username',  # 替换为你的数据库用户名
-        'password': '',  # 留空，使用Cloud SQL IAM或其他安全方式
-        'host': 'your_instance_ip_or_host',
-        'database': 'your_database_name'
+        'user': 'root',  # 替换为你的数据库用户名
+        'password': '205515',  # 留空，使用Cloud SQL IAM或其他安全方式
+        'host': '35.185.164.158',
+        'database': 'hapince'
     }
     engine = sqlalchemy.create_engine(
         sqlalchemy.engine.url.URL(
