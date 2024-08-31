@@ -17,15 +17,13 @@ def get_database_connection():
         'host': '35.185.164.158',
         'database': 'hapince'
     }
-    engine = sqlalchemy.create_engine(
-        sqlalchemy.engine.url.URL(
-            drivername='mysql+pymysql',
-            username=db_config['user'],
-            password=db_config['password'],
-            host=db_config['host'],
-            database=db_config['database']
-        )
+    
+    connection_string = (
+        f"mysql+pymysql://{db_config['user']}:{db_config['password']}@"
+        f"{db_config['host']}/{db_config['database']}"
     )
+    
+    engine = sqlalchemy.create_engine(connection_string)
     return engine
 
 # 创建用户表
