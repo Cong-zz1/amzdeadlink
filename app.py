@@ -12,8 +12,8 @@ from utils import google_search, bing_search
 # 连接到Google Cloud SQL数据库
 def get_database_connection():
     db_config = {
-        'user': 'root',  # 替换为你的数据库用户名
-        'password': '205515',  # 留空，使用Cloud SQL IAM或其他安全方式
+        'user': 'root',
+        'password': 'your_password',  # 确保使用正确的密码
         'host': '35.185.164.158',
         'database': 'hapince'
     }
@@ -25,6 +25,7 @@ def get_database_connection():
     
     engine = sqlalchemy.create_engine(connection_string)
     return engine
+
 
 # 创建用户表
 def create_user_table(engine):
