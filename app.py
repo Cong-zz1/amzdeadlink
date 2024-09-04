@@ -4,40 +4,10 @@ from io import BytesIO
 import time
 import random
 import requests
-from bs4 import BeautifulSoup
-from utils import google_search, bing_search
 
-# List of user agents to randomize the header for each request
-USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/92.0.902.67',
-    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.2 Safari/605.1.15',
-    'Mozilla/5.0 (X11; Linux i686; rv:91.0) Gecko/20100101 Firefox/91.0',
-    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
-    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0',
-    'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.1 Safari/605.1.15',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux i686; rv:78.0) Gecko/20100101 Firefox/78.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36'
-]
-
-def get_random_user_agent():
-    """Return a random User-Agent from the list."""
-    return random.choice(USER_AGENTS)
+# Replace with your actual Google Custom Search API key and search engine ID (cx)
+API_KEY = 'AIzaSyAwdeeXOjyDULUWHqzetfWTZbybcEm3EDc'
+CX = '533552966603-vf3im8ncgtngblj1cbsr1ua47lpd43gd.apps.googleusercontent.com'
 
 def extract_asin(url):
     """Extract ASIN from Amazon product URL."""
@@ -65,10 +35,10 @@ def extract_image_url(asin):
     
     return None
 
-def fetch_all_results(search_engine, keyword, amazon_site, max_links=50):
-    """Fetch results until the desired number of links is reached."""
-    page = 0
+def fetch_all_results(keyword, amazon_site, max_links=50):
+    """Fetch results from Google Custom Search API until the desired number of links is reached."""
     all_results = []
+    start_index = 1
     
     progress_bar = st.progress(0)  # Initialize progress bar
 
@@ -77,12 +47,7 @@ def fetch_all_results(search_engine, keyword, amazon_site, max_links=50):
         delay = random.uniform(2, 5)
         time.sleep(delay)
         
-        if search_engine == "Google":
-            headers = {'User-Agent': get_random_user_agent()}
-            results = google_search(keyword, amazon_site, page, headers=headers)
-        elif search_engine == "Bing":
-            headers = {'User-Agent': get_random_user_agent()}
-            results = bing_search(keyword, amazon_site, page, headers=headers)
+        results = google_search(keyword, amazon_site, start_index)
         
         # If no more results are found, break the loop
         if not results:
@@ -98,17 +63,18 @@ def fetch_all_results(search_engine, keyword, amazon_site, max_links=50):
         progress = len(all_results) / max_links
         progress_bar.progress(progress)
         
-        page += 1
+        start_index += 10  # Google Custom Search API returns 10 results per page
 
     progress_bar.progress(1.0)  # Ensure the progress bar reaches 100%
     
     return all_results
 
+
 def main():
     st.title("亚马逊僵尸链接采集工具")
     st.write("遇到问题联系：happy_prince45")
     st.subheader("搜索设置")
-    search_engine = st.selectbox("选择搜索引擎", ["Google", "Bing"])
+    
     amazon_site = st.selectbox("选择亚马逊站点", [
         "amazon.com", "amazon.ca", "amazon.co.uk", "www.amazon.com.au", 
         "www.amazon.in", "www.amazon.sg", "www.amazon.ae"
@@ -118,7 +84,7 @@ def main():
 
     if st.button("搜索"):
         # Fetch results from all pages
-        all_results = fetch_all_results(search_engine, keyword, amazon_site, max_links)
+        all_results = fetch_all_results(keyword, amazon_site, max_links)
 
         if all_results:
             # Filter out links containing 'sellercentral'
@@ -171,4 +137,4 @@ def main():
 
 
 if __name__ == "__main__":
-        main()
+    main()
