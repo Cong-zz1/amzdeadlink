@@ -94,7 +94,7 @@ def main():
         "www.amazon.in", "www.amazon.sg", "www.amazon.ae"
     ])
     keyword = st.text_input("输入关键词")
-    max_links = st.slider("查询链接数限制", 10, 50, 200)  # Allow user to set maximum number of links to fetch
+    max_links = st.slider("请选择查询结果数量", 10, 50, 200)  # Allow user to set maximum number of links to fetch
 
     if st.button("搜索"):
         # Fetch results from all pages
@@ -149,23 +149,6 @@ def main():
     st.write("关注公众号“Hapince出海日记”")
     st.image("image/publicwechat.jpg")
 
-def check_password():
-    """Returns `True` if the user enters the correct password."""
-    if "password_correct" not in st.session_state:
-        st.subheader("用户认证")
-        password = st.text_input("请输入密码", type="password")
-        if st.button("提交"):
-            if password == "happyprince":  # Set password to 'happyprince'
-                st.session_state.password_correct = True
-            else:
-                st.error("密码错误，请重试")
-                st.session_state.password_correct = False
-
-    return st.session_state.get("password_correct", False)
 
 if __name__ == "__main__":
-    if check_password():
         main()
-    else:
-        st.warning("由于服务器资源有限，为避免不必要流量，请进入官方群或关注微信公众号“Hapince出海日记”获取密码")
-        st.image("image/wechatgroup.jpg")
