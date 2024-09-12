@@ -1,8 +1,0 @@
-steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/upheld-quanta-431803-g7/amzdeadlink', '.']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/your_image_name']
-
-images:
-  - 'gcr.io/$PROJECT_ID/your_image_name'

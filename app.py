@@ -4,10 +4,31 @@ from io import BytesIO
 import time
 import random
 import requests
+from bs4 import BeautifulSoup
+from utils import google_search, bing_search
+import os
 
-# Replace with your actual Google Custom Search API key and search engine ID (cx)
-API_KEY = 'AIzaSyAwdeeXOjyDULUWHqzetfWTZbybcEm3EDc'
-CX = '533552966603-vf3im8ncgtngblj1cbsr1ua47lpd43gd.apps.googleusercontent.com'
+# Add custom CSS to hide the GitHub icon
+hide_github_icon = """
+.st-emotion-cache-1wbqy5l e3g6aar2 {
+  visibility: hidden;
+}
+"""
+
+# List of user agents to randomize the header for each request
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/91.0.864.54',
+    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0'
+]
+
+# Path to the file storing user count
+USER_COUNT_FILE = "user_count.txt"
+
+def get_random_user_agent():
+    """Return a random User-Agent from the list."""
+    return random.choice(USER_AGENTS)
 
 def extract_asin(url):
     """Extract ASIN from Amazon product URL."""
@@ -35,10 +56,10 @@ def extract_image_url(asin):
     
     return None
 
-def fetch_all_results(keyword, amazon_site, max_links=50):
-    """Fetch results from Google Custom Search API until the desired number of links is reached."""
+def fetch_all_results(search_engine, keyword, amazon_site, max_links=50):
+    """Fetch results until the desired number of links is reached."""
+    page = 0
     all_results = []
-    start_index = 1
     
     progress_bar = st.progress(0)  # Initialize progress bar
 
@@ -47,7 +68,12 @@ def fetch_all_results(keyword, amazon_site, max_links=50):
         delay = random.uniform(2, 5)
         time.sleep(delay)
         
-        results = google_search(keyword, amazon_site, start_index)
+        if search_engine == "Google":
+            headers = {'User-Agent': get_random_user_agent()}
+            results = google_search(keyword, amazon_site, page, headers=headers)
+        elif search_engine == "Bing":
+            headers = {'User-Agent': get_random_user_agent()}
+            results = bing_search(keyword, amazon_site, page, headers=headers)
         
         # If no more results are found, break the loop
         if not results:
@@ -63,28 +89,69 @@ def fetch_all_results(keyword, amazon_site, max_links=50):
         progress = len(all_results) / max_links
         progress_bar.progress(progress)
         
-        start_index += 10  # Google Custom Search API returns 10 results per page
+        page += 1
 
     progress_bar.progress(1.0)  # Ensure the progress bar reaches 100%
     
     return all_results
 
+def update_user_count():
+    """Update and return the current user count."""
+    if not os.path.exists(USER_COUNT_FILE):
+        # If file doesn't exist, create it with the initial value
+        with open(USER_COUNT_FILE, "w") as f:
+            f.write("735")
+    
+    # Read current count
+    with open(USER_COUNT_FILE, "r") as f:
+        user_count = int(f.read().strip())
+    
+    # Increment count
+    user_count += 1
+    
+    # Save the updated count back to the file
+    with open(USER_COUNT_FILE, "w") as f:
+        f.write(str(user_count))
+    
+    return user_count
+
+def display_user_count(user_count):
+    """Display the user count at the bottom left corner without overlapping."""
+    st.markdown(
+        f"""
+        <div style='
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background-color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;'>
+            使用人数: {user_count}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 def main():
     st.title("亚马逊僵尸链接采集工具")
     st.write("遇到问题联系：happy_prince45")
     st.subheader("搜索设置")
-    
+    search_engine = st.selectbox("选择搜索引擎", ["Google", "Bing"])
     amazon_site = st.selectbox("选择亚马逊站点", [
         "amazon.com", "amazon.ca", "amazon.co.uk", "www.amazon.com.au", 
         "www.amazon.in", "www.amazon.sg", "www.amazon.ae"
     ])
     keyword = st.text_input("输入关键词")
-    max_links = st.slider("请选择查询结果数量", 10, 50, 200)  # Allow user to set maximum number of links to fetch
+    max_links = st.slider("查询链接数限制", 3, 15, 5)  # Allow user to set maximum number of links to fetch
 
     if st.button("搜索"):
         # Fetch results from all pages
-        all_results = fetch_all_results(keyword, amazon_site, max_links)
+        all_results = fetch_all_results(search_engine, keyword, amazon_site, max_links)
 
         if all_results:
             # Filter out links containing 'sellercentral'
@@ -103,7 +170,7 @@ def main():
                     image_tag = f'<img src="{image_url}" style="width:100px;height:100px;object-fit:cover;"/>' if image_url else f'<img src="https://ninjify.shop/wp-content/uploads/2024/08/微信图片_20240831012417.jpg" style="width:100px;height:100px;object-fit:cover;"/>'
                     st.session_state.results.append({"Image": image_tag, "Title": title, "URL": link, "ASIN": asin})
 
-                st.subheader(f"搜索结果显示{max_links}条")
+                st.subheader(f"搜索结果-试用版限制{max_links}条，如果要取消限制，请联系管理员")
                 
                 # Display results in table format
                 results_df = pd.DataFrame(st.session_state.results)
@@ -135,6 +202,34 @@ def main():
     st.write("关注公众号“Hapince出海日记”")
     st.image("image/publicwechat.jpg")
 
+    # Display the user count at the bottom left corner
+    user_count = int(open(USER_COUNT_FILE).read().strip())  # Read the current count
+    display_user_count(user_count)
+
+def check_password():
+    """Returns `True` if the user enters the correct password."""
+    if "password_correct" not in st.session_state:
+        st.subheader("用户认证")
+        password = st.text_input("请输入密码", type="password")
+        if st.button("提交"):
+            if password == "happyprince":  # Set password to 'happyprince'
+                st.session_state.password_correct = True
+                # Update and display user count after correct password submission
+                user_count = update_user_count()
+                display_user_count(user_count)
+            else:
+                st.error("密码错误，请重试")
+                st.session_state.password_correct = False
+
+    return st.session_state.get("password_correct", False)
 
 if __name__ == "__main__":
-    main()
+    # Display the user count at the bottom left corner of the password page
+    user_count = int(open(USER_COUNT_FILE).read().strip())  # Read the current count
+    display_user_count(user_count)
+
+    if check_password():
+        main()
+    else:
+        st.warning("由于服务器资源有限，为避免不必要流量，请进入官方群或关注微信公众号“Hapince出海日记”获取密码")
+        st.image("image/publicwe.jpg")
